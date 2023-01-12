@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Список аналогов{% endblock %}
+{% block header %}Список аналогов{% endblock %}
+{% block content %}
+
+
+{% for analog in analogs %}
+<p><b>{{ analog.marking }}</b></p>
+
+<p>Аналоги:</p>
+<ul>
+    {% for mark in analog.marking_analog.all %}
+    <li>
+        {{mark.marking}}
+    </li>
+    {% endfor %}
+</ul>
+    
+{% if not forloop.last %}<hr>{% endif %}
+{% endfor %} 
+
+{% endblock %}

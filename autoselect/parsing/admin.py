@@ -9,3 +9,4 @@ class SensorAdmin(admin.ModelAdmin):
     empty_value_display = '-пусто-'
 
 admin.site.register(Sensor, SensorAdmin)
+admin.site.register(Analog, SensorAdmin)

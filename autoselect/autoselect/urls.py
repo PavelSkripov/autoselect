@@ -17,6 +17,8 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
-    path('', include('parsing.urls')),
+    path('', include('parsing.urls', namespace='parsing')),
+    path('analogs/', include('parsing.urls', namespace='parsing')),
+    path('analogs/<marking>/', include('parsing.urls', namespace='parsing')),
     path('admin/', admin.site.urls),
 ]

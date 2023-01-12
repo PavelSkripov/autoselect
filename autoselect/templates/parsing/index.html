@@ -4,5 +4,19 @@
 {% block header %}Последние обновления на сайте{% endblock %}
 {% block content %}
 
+<!--<form action="{% url 'parsing:index' %}" method="post">
+    {% csrf_token %}
+    <label for="marking">Введите маркировку: </label>
+    <input id="marking" type="text" name="name_field" value="">
+    <input type="submit" value="OK">
+</form> -->
+
+<form action="{% url 'parsing:index' %}" method="post">
+    <div class="form-error">{{ form.non_field_errors }}</div>
+    {% csrf_token %}
+    <p><label for="{{ form.marking.id_for_label }}">{{form.marking.label}}&nbsp&nbsp </label>{{ form.marking }}</p>
+    <div class="form-error">{{ form.marking.errors }}</div>
+    <input type="submit" value="OK">
+</form>
        
 {% endblock %}
