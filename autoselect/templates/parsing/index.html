@@ -16,7 +16,7 @@
     {% csrf_token %}
     <p><label for="{{ form.marking.id_for_label }}">{{form.marking.label}}&nbsp&nbsp </label>{{ form.marking }}</p>
     <div class="form-error">{{ form.marking.errors }}</div>
-    <input type="submit" value="OK">
+    <input type="submit" value="Найти">
 </form>
        
 {% endblock %}

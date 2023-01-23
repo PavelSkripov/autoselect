@@ -1,3 +1,4 @@
+
 {% extends 'base.html' %}
 {% block title %}Список аналогов{% endblock %}
 {% block header %}Список аналогов{% endblock %}
@@ -5,16 +6,19 @@
 
 
 {% for analog in analogs %}
-<p><b>{{ analog.marking }}</b></p>
+    <a href="{% url 'parsing:analog_detail' analog.marking %}">{{ analog.marking }}</a><br>
+    <!--<p><b>{{ analog.marking }}</b></p>-->
+    <i>Бренд: {{ analog.manufacture_original }}</i>
 
-<p>Аналоги:</p>
-<ul>
-    {% for mark in analog.marking_analog.all %}
-    <li>
-        {{mark.marking}}
-    </li>
-    {% endfor %}
-</ul>
+    <p>
+        Аналоги:
+
+        {% for mark in analog.marking_analog.all %}
+    
+            {{mark.marking}}{% if not forloop.last %}, {% endif %}
+    
+        {% endfor %}
+    </p>
     
 {% if not forloop.last %}<hr>{% endif %}
 {% endfor %} 
