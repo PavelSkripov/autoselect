@@ -31,6 +31,7 @@ class Sensor(models.Model):
     degree_of_protect = models.CharField(max_length=30, null=True, blank=True)
     num_wires = models.CharField(max_length=30, null=True, blank=True)
     temp_range = models.CharField(max_length=30, null=True, blank=True)
+    class_temp = models.CharField(max_length=30, null=True, blank=True)
     work_dist = models.CharField(max_length=30, null=True, blank=True)
     special_assign = models.CharField(max_length=30, null=True, blank=True)
     wiring = models.CharField(max_length=30, null=True, blank=True)
@@ -86,7 +87,6 @@ class Sensor(models.Model):
     # Соединители
     nut_material = models.CharField(max_length=30, null=True, blank=True)
     plug_type = models.CharField(max_length=30, null=True, blank=True)
-    cable_length = models.CharField(max_length=30, null=True, blank=True)
     num_contacts = models.CharField(max_length=30, null=True, blank=True)
     view = models.CharField(max_length=30, null=True, blank=True)
     connect = models.CharField(max_length=30, null=True, blank=True)
