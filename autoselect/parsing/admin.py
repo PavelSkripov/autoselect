@@ -18,12 +18,23 @@ class SensorResource(resources.ModelResource):
     class Meta:
         model = Sensor
 
+class SensorResource1(resources.ModelResource):
+
+    class Meta:
+        model = Analog
+
 class SensorAdmin(ImportExportModelAdmin):
     resource_class = SensorResource
     list_display = ('pk', 'marking',)
     search_fields = ('marking',)
     empty_value_display = '-пусто-'
 
+class AnalogAdmin(ImportExportModelAdmin):
+    resource_class = SensorResource1
+    list_display = ('pk', 'marking',)
+    search_fields = ('marking',)
+    empty_value_display = '-пусто-'
+
 admin.site.register(Sensor, SensorAdmin)
-admin.site.register(Analog, SensorAdmin)
+admin.site.register(Analog, AnalogAdmin)
 

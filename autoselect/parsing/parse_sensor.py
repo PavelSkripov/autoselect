@@ -2,7 +2,7 @@ import json
 import requests
 from bs4 import BeautifulSoup
 from transliterate import translit, get_available_language_codes, slugify
-#from .models import Analog, Sensor
+from .models import Analog, Sensor
 
 
 PAGES_COUNT = ['ВБИ-П18В-36УР-1122-С']
@@ -85,7 +85,7 @@ def parse_products(markings):
     return induct(techs)
 
 def induct(data):
-    x = 0
+    x = ''
     if data['Тип корпуса'] == 'Цилиндрический с резьбой':
         data['Тип корпуса'] = 'Цилиндрический резьбовой'
     elif data['Тип корпуса'] == 'Цилиндрический гладкий':
@@ -116,6 +116,15 @@ def induct(data):
     if '-' in data['Рабочее напряжение, В']:
         x = data['Рабочее напряжение, В'].replace('-', '...') 
         data['Рабочее напряжение, В'] = x
+    if ',' in data['Расстояние срабатывания Sn, мм']:
+        x = data['Расстояние срабатывания Sn, мм'].replace(',', '.')
+        data['Расстояние срабатывания Sn, мм'] = x
+    if ',' in data['Частота переключения, Гц']:
+        x = data['Частота переключения, Гц'].replace(',', '.')
+        data['Частота переключения, Гц'] = x
+    if ',' in data['Частота переключения, Гц']:
+        x = data['Частота переключения, Гц'].replace(',', '.')
+        data['Частота переключения, Гц'] = x
     if ' / L = ' in data['Габаритный размер, мм']:
         x = data['Габаритный размер, мм'].replace(' / L = ', 'х') 
         data['Габаритный размер, мм'] = x
@@ -159,21 +168,66 @@ def induct(data):
             data['Класс температуры'] = 'Сверхвысокотемпературный'
         else:
             data['Класс температуры'] = 'Широкий темп. диапазон'
-    return data
+    print(data)
+    return create_analog(data)
     
 
-def create(marking):
-    x = 1
-    data = parse_products(marking)
-    #analog = Analog.objects.get(marking=marking)
-    types = {
-            'Индуктивный': ('руб', x),
-            'Оптический': ('Euro', x),
-            'Емкостный': ('USD', x)
-        }
-    if data[0]['Тип датчика'] not in types:
-            return print('Не найден тип датчика')
-        #else: 
+def create_analog(data):
+    x = ''
+    y = ''
+    techs = []
+    analog_list = []
+    analog = Analog.objects.create(
+                marking = data['Наименование']
+    )
+    sensor_objects1 = Sensor.objects.filter(
+    type_current__startswith=data['Тип напряжения'], 
+    standard_size__exact=float(data['Размер корпуса']),
+    type_shell__startswith=data['Тип корпуса'],
+    mounting__startswith=data['Монтажное исполнение'],
+    output_function__startswith=data['Функция выхода'],
+    contact_structure__startswith=data['Схема выхода']
+    )[:1]
+    
+    print('sensor_objects1', sensor_objects1)
+    for sensor_object in sensor_objects1:
+        analog.mark = sensor_object.marking
+        analog.marking_analog.add(sensor_object)
+        if data['Габаритный размер, мм'] not in sensor_object.case_size:
+            x = data['Габаритный размер, мм']
+            y = f'Габариты {sensor_object.case_size} мм (оригинал {x} мм)'
+            techs.append(y)
+        if float(data['Расстояние срабатывания Sn, мм']) != sensor_object.sensing_distance:
+            x = data['Расстояние срабатывания Sn, мм']
+            y = f'Расстояние срабатывания {sensor_object.sensing_distance} мм (оригинал {x} мм)'
+            techs.append(y)
+        if data['Максимальный ток коммутационного элемента, мА'] not in sensor_object.current:
+            x = data['Максимальный ток коммутационного элемента, мА']
+            y = f'Максимальный рабочий ток {sensor_object.current} мА (оригинал {x} мА)'
+            techs.append(y)
+        if float(data['Частота переключения, Гц']) != sensor_object.frequency:
+            x = data['Частота переключения, Гц']
+            y = f'Частота переключения {sensor_object.frequency} Гц (оригинал {x} Гц)'
+            techs.append(y)
+        if data['Температура окружающей среды'] not in sensor_object.temp_range:
+            x = data['Температура окружающей среды']
+            y = f'Диапазон рабочих температур {sensor_object.temp_range} (оригинал {x})'
+            techs.append(y)
+        if data['Степень защиты корпуса'] not in sensor_object.degree_of_protect:
+            x = data['Степень защиты корпуса']
+            y = f'Степень защиты {sensor_object.degree_of_protect} (оригинал {x})'
+            techs.append(y)
+        if data['Материал корпуса'] not in sensor_object.housing:
+            x = data['Материал корпуса']
+            y = f'Материал корпуса {sensor_object.housing} (оригинал {x})'
+            techs.append(y)
+        analog.difference = json.dumps(techs)
+        analog.save()
+         
+    print('analog:', analog)
+    
+    return techs
+    
             
         
 
@@ -185,7 +239,7 @@ def create(marking):
 #def main():
     #urls = crawl_products(PAGES_COUNT)
     #data = parse_products(urls)
-print(parse_products(PAGES_COUNT))
+#print(parse_products(PAGES_COUNT))
 
 #if __name__ == '__main__':
     #main()

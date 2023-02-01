@@ -1,11 +1,20 @@
 
 {% extends 'base.html' %}
-{% block title %}Аналог{% endblock %}
-{% block header %}Аналог{% endblock %}
+{% block title %}{{ marking }}{% endblock %}
+{% block header %}{{ marking }}{% endblock %}
 {% block content %}
 
-<p>{{ marking }}</p>
+<p>Список аналогов для {{ marking }}:</p>
 
-{{ data }}
+{{ analog.mark }}
+
+<br>Отличия: {% for dif in difference %}
+        <ul>
+            <li>
+                {{ dif }}
+            </li>
+        </ul>  
+        
+        {% endfor %} 
 
 {% endblock %}

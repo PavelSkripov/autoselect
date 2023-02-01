@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
@@ -49,17 +50,47 @@ def analogs(request):
 
 def analog_detail(request, marking):
     #list = get_object_or_404(Analog, marking=marking)
+    jsonDec = json.decoder.JSONDecoder()
     mark_list = []
     mark_list.append(marking)
-    data = parse_sensor.parse_products(mark_list)
-    print(data)
+    if Analog.objects.filter(marking=marking).exists():
+        analog = Analog.objects.get(marking=marking)
+    else:
+        data = parse_sensor.parse_products(mark_list)
+        print(data)
+        analog = Analog.objects.get(marking=marking)
+
     template = 'parsing/analogs_detail.html'
-    #analog = Analog.objects.get(marking=marking)
+    if analog.difference:
+        difference = jsonDec.decode(analog.difference)
+    else:
+        difference = None
+    if analog.difference1:
+        difference1 = jsonDec.decode(analog.difference1)
+    else:
+        difference1 = None
+    if analog.difference2:
+        difference2 = jsonDec.decode(analog.difference2)
+    else:
+        difference2 = None
+    if analog.difference3:
+        difference3 = jsonDec.decode(analog.difference3)
+    else:
+        difference3 = None
+    if analog.difference4:
+        difference4 = jsonDec.decode(analog.difference4)
+    else:
+        difference4 = None
+    
     context = {
         #'list' : list,
-        #'analog' : analog,
-        'data' : data,
+        'analog' : analog,
         'marking' : marking,
+        'difference' : difference,
+        'difference1' : difference1,
+        'difference2' : difference2,
+        'difference3' : difference3,
+        'difference4' : difference4,
     }
     return render(request, template, context)
 
