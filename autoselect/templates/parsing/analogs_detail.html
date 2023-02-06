@@ -6,13 +6,13 @@
 
 <p>Список аналогов для {{ marking }}:</p>
 
-{{ analog.mark }}
+<!--{{ analog.mark }} -->
 
-<br>Отличия: {% for dif in difference %}
+<br>{% for dif in difference %}
         <ul>
-            <li>
+           <!-- <li> -->
                 {{ dif }}
-            </li>
+           <!-- </li> -->
         </ul>  
         
         {% endfor %} 

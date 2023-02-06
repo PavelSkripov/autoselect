@@ -1,4 +1,5 @@
 import json
+import math
 import requests
 from bs4 import BeautifulSoup
 from transliterate import translit, get_available_language_codes, slugify
@@ -6,6 +7,9 @@ from .models import Analog, Sensor
 
 
 PAGES_COUNT = ['ВБИ-П18В-36УР-1122-С']
+RECT_SQUARE = [3600, 303, 3936, 6400, 3360, 1250, 3600, 1600, 28900, 480,
+16, 4050, 3300, 560, 4160, 924, 2072, 450, 1100, 5376, 144, 1692, 2485, 2800,
+2730, 6075, 600, 856, 5700]
 
 def get_soup(url, **kwargs):
     response = requests.get(url, **kwargs)
@@ -34,6 +38,9 @@ def get_soup(url, **kwargs):
 #            urls.append(url)
 
 #    return urls
+
+def nearest(lst, target):
+  return min(lst, key=lambda x: abs(x-target))
 
 def urls_list(markings):
     urls = []
@@ -122,8 +129,8 @@ def induct(data):
     if ',' in data['Частота переключения, Гц']:
         x = data['Частота переключения, Гц'].replace(',', '.')
         data['Частота переключения, Гц'] = x
-    if ',' in data['Частота переключения, Гц']:
-        x = data['Частота переключения, Гц'].replace(',', '.')
+    if 'Гц' in data['Частота переключения, Гц']:
+        x = data['Частота переключения, Гц'].replace(' Гц', '')
         data['Частота переключения, Гц'] = x
     if ' / L = ' in data['Габаритный размер, мм']:
         x = data['Габаритный размер, мм'].replace(' / L = ', 'х') 
@@ -136,15 +143,11 @@ def induct(data):
         data['Размер корпуса'] = x
         x = data['Размер корпуса'].replace(' мм', '')
         data['Размер корпуса'] = x
-    elif 'х' in data['Размер корпуса']:
-        x = data['Размер корпуса'].split('х')
-        data['Размер корпуса'] = x[1]
-        x = data['Размер корпуса'].replace(' мм', '')
-        data['Размер корпуса'] = x
+        
     if data['Монтажное исполнение'] == 'Утапливаемое':
         data['Монтажное исполнение'] = 'Встраиваемый'
-    elif data['Монтажное исполнение'] == 'неутапливаемое':
-        data['Монтажное исполнение'] = 'невстраиваемый'
+    elif data['Монтажное исполнение'] == 'Неутапливаемое':
+        data['Монтажное исполнение'] = 'Невстраиваемый'
     if data['Функция выхода'] == 'НО':
         data['Функция выхода'] = 'NO'
     elif data['Функция выхода'] == 'НЗ':
@@ -158,71 +161,146 @@ def induct(data):
         x = x.split('…')
         if int(x[0]) >= -30 and int(x[1]) <= 80:
             data['Класс температуры'] = 'Стандартный'
-        elif int(x[0]) < -30 and int(x[0]) > -45 and int(x[1]) <= 80:
+        elif int(x[0]) < -30 and int(x[0]) >= -45 and int(x[1]) <= 80:
             data['Класс температуры'] = 'Низкотемпературный'
         elif int(x[0]) < -45:
             data['Класс температуры'] = 'Сверхнизкотемпературный'
-        elif int(x[1]) > 80 and int(x[1]) < 105 and int(x[0]) >= -30:
+        elif int(x[1]) > 80 and int(x[1]) <= 105 and int(x[0]) >= -30:
             data['Класс температуры'] = 'Высокотемпературный'
         elif int(x[1]) > 105:
             data['Класс температуры'] = 'Сверхвысокотемпературный'
         else:
             data['Класс температуры'] = 'Широкий темп. диапазон'
+        if data['Тип корпуса'] == 'Прямоугольный' or data['Тип корпуса'] == 'Щелевой':
+            x = data['Габаритный размер, мм'].replace(',', '.')
+            data['Габаритный размер, мм'] = x
+            x = data['Габаритный размер, мм'].split('х')
+            del x[-1]
+            result = [float(item) for item in x]
+            data['Размер корпуса'] = math.ceil(math.prod(result))
+            print('Площадь прямоуг. корпуса:', data['Размер корпуса'])
+            square = nearest(RECT_SQUARE, data['Размер корпуса'])
+            data['Размер корпуса'] = square
+
+        
     print(data)
     return create_analog(data)
     
+
 
 def create_analog(data):
     x = ''
     y = ''
     techs = []
     analog_list = []
-    analog = Analog.objects.create(
-                marking = data['Наименование']
-    )
-    sensor_objects1 = Sensor.objects.filter(
-    type_current__startswith=data['Тип напряжения'], 
-    standard_size__exact=float(data['Размер корпуса']),
-    type_shell__startswith=data['Тип корпуса'],
-    mounting__startswith=data['Монтажное исполнение'],
-    output_function__startswith=data['Функция выхода'],
-    contact_structure__startswith=data['Схема выхода']
-    )[:1]
     
-    print('sensor_objects1', sensor_objects1)
-    for sensor_object in sensor_objects1:
-        analog.mark = sensor_object.marking
-        analog.marking_analog.add(sensor_object)
-        if data['Габаритный размер, мм'] not in sensor_object.case_size:
-            x = data['Габаритный размер, мм']
-            y = f'Габариты {sensor_object.case_size} мм (оригинал {x} мм)'
-            techs.append(y)
-        if float(data['Расстояние срабатывания Sn, мм']) != sensor_object.sensing_distance:
-            x = data['Расстояние срабатывания Sn, мм']
-            y = f'Расстояние срабатывания {sensor_object.sensing_distance} мм (оригинал {x} мм)'
-            techs.append(y)
-        if data['Максимальный ток коммутационного элемента, мА'] not in sensor_object.current:
-            x = data['Максимальный ток коммутационного элемента, мА']
-            y = f'Максимальный рабочий ток {sensor_object.current} мА (оригинал {x} мА)'
-            techs.append(y)
-        if float(data['Частота переключения, Гц']) != sensor_object.frequency:
-            x = data['Частота переключения, Гц']
-            y = f'Частота переключения {sensor_object.frequency} Гц (оригинал {x} Гц)'
-            techs.append(y)
-        if data['Температура окружающей среды'] not in sensor_object.temp_range:
-            x = data['Температура окружающей среды']
-            y = f'Диапазон рабочих температур {sensor_object.temp_range} (оригинал {x})'
-            techs.append(y)
-        if data['Степень защиты корпуса'] not in sensor_object.degree_of_protect:
-            x = data['Степень защиты корпуса']
-            y = f'Степень защиты {sensor_object.degree_of_protect} (оригинал {x})'
-            techs.append(y)
-        if data['Материал корпуса'] not in sensor_object.housing:
-            x = data['Материал корпуса']
-            y = f'Материал корпуса {sensor_object.housing} (оригинал {x})'
-            techs.append(y)
-        analog.difference = json.dumps(techs)
-        analog.save()
+    
+    if data['Тип датчика'] in 'Индуктивный':
+        analog = Analog.objects.create(
+                marking = data['Наименование'])
+
+        sensor_objects = Sensor.objects.filter(
+        type_current__startswith=data['Тип напряжения'], 
+        standard_size__exact=float(data['Размер корпуса']),
+        type_shell__startswith=data['Тип корпуса'],
+        mounting__startswith=data['Монтажное исполнение'],
+        output_function__exact=data['Функция выхода'],
+        contact_structure__startswith=data['Схема выхода'],
+        housing__startswith=data['Материал корпуса'],
+        degree_of_protect__startswith=data['Степень защиты корпуса'],
+        connection_type__startswith=data['Вид подключения'],
+        class_temp__startswith=data['Класс температуры']
+        )[:5] | Sensor.objects.filter(
+
+        type_current__startswith=data['Тип напряжения'], 
+        standard_size__exact=float(data['Размер корпуса']),
+        type_shell__startswith=data['Тип корпуса'],
+        contact_structure__startswith=data['Схема выхода'],
+        output_function__in=[data['Функция выхода']],
+        mounting__startswith=data['Монтажное исполнение'],
+        housing__in=[data['Материал корпуса']],
+        degree_of_protect__in=[data['Степень защиты корпуса'], 'IP67'],
+        #connection_type__startswith=data['Вид подключения'],
+        class_temp__in=[data['Класс температуры'], 'Стандартный']
+        )[:5] | Sensor.objects.filter(
+
+        type_current__startswith=data['Тип напряжения'], 
+        standard_size__exact=float(data['Размер корпуса']),
+        type_shell__startswith=data['Тип корпуса'],
+        contact_structure__startswith=data['Схема выхода'],
+        output_function__in=[data['Функция выхода'], 'NO/NC'],
+        mounting__startswith=data['Монтажное исполнение'],
+        #housing__startswith=data['Материал корпуса'],
+        degree_of_protect__in=[data['Степень защиты корпуса'], 'IP67'],
+        #connection_type__startswith=data['Вид подключения'],
+        class_temp__in=[data['Класс температуры'], 'Стандартный']
+        )[:5]| Sensor.objects.filter(
+
+        type_current__startswith=data['Тип напряжения'], 
+        standard_size__exact=float(data['Размер корпуса']),
+        type_shell__startswith=data['Тип корпуса'],
+        contact_structure__startswith=data['Схема выхода'],
+        output_function__in=[data['Функция выхода'], 'NO/NC'],
+        #mounting__startswith=data['Монтажное исполнение'],
+        #housing__startswith=data['Материал корпуса'],
+        #degree_of_protect__in=[data['Степень защиты корпуса'], 'IP67'],
+        #connection_type__startswith=data['Вид подключения'],
+        class_temp__in=[data['Класс температуры'], 'Стандартный']
+        )[:5]
+
+        for sensor_object in sensor_objects:
+            analog.mark = sensor_object.marking
+            analog.marking_analog.add(sensor_object)
+            techs.append(sensor_object.marking)
+            techs.append('Отличия:')
+            if data['Габаритный размер, мм'] not in sensor_object.case_size:
+                x = data['Габаритный размер, мм']
+                y = f'Габариты {sensor_object.case_size} мм (оригинал {x} мм)'
+                techs.append(y)
+            if data['Монтажное исполнение'] not in sensor_object.mounting:
+                x = data['Монтажное исполнение']
+                y = f'Монтаж {sensor_object.mounting} заподлицо в металл (оригинал {x})'
+                techs.append(y)
+            if float(data['Расстояние срабатывания Sn, мм']) != sensor_object.sensing_distance:
+                x = data['Расстояние срабатывания Sn, мм']
+                y = f'Расстояние срабатывания {sensor_object.sensing_distance} мм (оригинал {x} мм)'
+                techs.append(y)
+            if data['Схема выхода'] not in sensor_object.contact_structure:
+                x = data['Схема выхода']
+                y = f'Структура выхода {sensor_object.contact_structure} (оригинал {x})'
+                techs.append(y)
+            if data['Функция выхода'] not in sensor_object.output_function:
+                x = data['Функция выхода']
+                y = f'Тип контакта {sensor_object.output_function} (оригинал {x})'
+                techs.append(y)
+            if data['Максимальный ток коммутационного элемента, мА'] not in sensor_object.current:
+                x = data['Максимальный ток коммутационного элемента, мА']
+                y = f'Максимальный рабочий ток {sensor_object.current} мА (оригинал {x} мА)'
+                techs.append(y)
+            if float(data['Частота переключения, Гц']) != sensor_object.frequency:
+                x = data['Частота переключения, Гц']
+                y = f'Частота переключения {sensor_object.frequency} Гц (оригинал {x} Гц)'
+                techs.append(y)
+            if data['Температура окружающей среды'] not in sensor_object.temp_range:
+                x = data['Температура окружающей среды']
+                y = f'Диапазон рабочих температур {sensor_object.temp_range} (оригинал {x})'
+                techs.append(y)
+            if data['Степень защиты корпуса'] not in sensor_object.degree_of_protect:
+                x = data['Степень защиты корпуса']
+                y = f'Степень защиты {sensor_object.degree_of_protect} (оригинал {x})'
+                techs.append(y)
+            if data['Материал корпуса'] not in sensor_object.housing:
+                x = data['Материал корпуса']
+                y = f'Материал корпуса {sensor_object.housing} (оригинал {x})'
+                techs.append(y)
+            if data['Вид подключения'] not in sensor_object.connection_type:
+                x = data['Вид подключения']
+                y = f'Вид подключения {sensor_object.connection_type} (оригинал {x})'
+                techs.append(y)
+            techs.append('___________')
+            analog.difference = json.dumps(techs)
+            analog.save()
+    
          
     print('analog:', analog)
     
