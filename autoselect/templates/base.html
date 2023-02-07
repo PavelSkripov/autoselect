@@ -5,18 +5,19 @@
     <!-- Сайт готов работать с мобильными устройствами -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Загружаем фав-иконки -->
-    <link rel="icon" href="static/img/fav/fav.ico" type="image">
-    <link rel="apple-touch-icon" sizes="180x180" href="static/img/fav/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="static/img/fav/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="static/img/fav/favicon-16x16.png">
+    {% load static %}
+    <link rel="icon" href="{% static "img/fav/fav.ico" %}" type="image">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static "img/fav/apple-touch-icon.png" %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static "img/fav/favicon-32x32.png" %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static "img/fav/favicon-16x16.png" %}">
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="theme-color" content="#ffffff">
     <!-- Подключен файл со стандартными стилями бустрап -->
-    {% load static %}
+    
     <link rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}">
     <script src="{% static 'jqery/dist/jquery.min.js'%}"></script>
     <script src="{% static 'bootstrap/dist/js/bootstrap.min.js'%}"></script>
-    <title>{% block title %}The last social media{% endblock %} | SocialNet</title>
+    <title>{% block title %}The last social media{% endblock %} | Autoselect</title>
   </head>
   <body>
     <header>

@@ -20,5 +20,6 @@ urlpatterns = [
     path('', include('parsing.urls', namespace='parsing')),
     path('analogs/', include('parsing.urls', namespace='parsing')),
     path('analogs/<marking>/', include('parsing.urls', namespace='parsing')),
+    path('not_found/', include('parsing.urls', namespace='parsing')),
     path('admin/', admin.site.urls),
 ]

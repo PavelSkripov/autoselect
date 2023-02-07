@@ -1,7 +1,7 @@
 
 {% extends 'base.html' %}
-{% block title %}Последние обновления на сайте{% endblock %}
-{% block header %}Последние обновления на сайте{% endblock %}
+{% block title %}Поиск аналога по маркировке{% endblock %}
+{% block header %}Поиск аналога по маркировке{% endblock %}
 {% block content %}
 
 <!--<form action="{% url 'parsing:index' %}" method="post">
@@ -11,6 +11,13 @@
     <input type="submit" value="OK">
 </form> -->
 
+<style>
+    .form-input{
+        width:450px;
+        margin: 10px 10px 10px 0;
+    }
+</style>
+
 <form action="{% url 'parsing:index' %}" method="post">
     <div class="form-error">{{ form.non_field_errors }}</div>
     {% csrf_token %}
@@ -18,5 +25,19 @@
     <div class="form-error">{{ form.marking.errors }}</div>
     <input type="submit" value="Найти">
 </form>
+
+<style>
+    ul {
+        text-align: right
+        }
+</style>
+
+<ul>
+    Аналоги производителей:
+</ul>
+<ul>
+    Сенсор
+</ul>
+
        
 {% endblock %}

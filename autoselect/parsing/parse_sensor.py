@@ -40,7 +40,7 @@ def get_soup(url, **kwargs):
 #    return urls
 
 def nearest(lst, target):
-  return min(lst, key=lambda x: abs(x-target))
+    return min(lst, key=lambda x: abs(x-target))
 
 def urls_list(markings):
     urls = []
@@ -56,16 +56,20 @@ def urls_list(markings):
         page_url = fmt.format(marking=mark_slug)
         print('product: {}'.format(mark))
         soup = get_soup(page_url)
+        print (f'soup: {soup}')
         if soup is None:
-            print(f'status_code != 200')
+            print(f'status_code 404')
             break
 
         urls.append(page_url)
+    if soup is None:
+        urls = []
     return urls
 
 
 def parse_products(markings):
-    data = []
+    techs = {}
+    data = 'marking_not_found'
     urls = urls_list(markings)
     for url in urls:
         print('url: {}'.format(url))
@@ -73,12 +77,9 @@ def parse_products(markings):
         if soup is None:
             break
 
-        techs = {}
-        item = {}
         type = soup.select_one('.product-page__intro.for-desktop').text.strip()
         sens_type = type.split(' ')[0]
         techs['Тип датчика'] = sens_type
-        data.append(item)
         
         for row in soup.select('.char-table__item'):
             #cols = row.select('char-table__name')
@@ -87,10 +88,12 @@ def parse_products(markings):
             name = row.select_one('.char-table__name').text.strip()
             value = row.select_one('.char-table__value').text.strip()
             techs[name] = value
-            data.append(techs)
-            #techs = {}
-    return induct(techs)
-
+        print('techs:', techs)
+    if urls == []:
+        return data
+    else:
+        return induct(techs)
+    
 def induct(data):
     x = ''
     if data['Тип корпуса'] == 'Цилиндрический с резьбой':
@@ -234,7 +237,7 @@ def create_analog(data):
         degree_of_protect__in=[data['Степень защиты корпуса'], 'IP67'],
         #connection_type__startswith=data['Вид подключения'],
         class_temp__in=[data['Класс температуры'], 'Стандартный']
-        )[:5]| Sensor.objects.filter(
+        )[:5] | Sensor.objects.filter(
 
         type_current__startswith=data['Тип напряжения'], 
         standard_size__exact=float(data['Размер корпуса']),
@@ -242,6 +245,18 @@ def create_analog(data):
         contact_structure__startswith=data['Схема выхода'],
         output_function__in=[data['Функция выхода'], 'NO/NC'],
         #mounting__startswith=data['Монтажное исполнение'],
+        #housing__startswith=data['Материал корпуса'],
+        #degree_of_protect__in=[data['Степень защиты корпуса'], 'IP67'],
+        #connection_type__startswith=data['Вид подключения'],
+        class_temp__in=[data['Класс температуры'], 'Стандартный']
+        )[:5] | Sensor.objects.filter(
+
+        type_current__startswith=data['Тип напряжения'], 
+        standard_size__exact=float(data['Размер корпуса']),
+        type_shell__startswith=data['Тип корпуса'],
+        contact_structure__startswith=data['Схема выхода'],
+        #output_function__in=[data['Функция выхода'], 'NO/NC'],
+        mounting__startswith=data['Монтажное исполнение'],
         #housing__startswith=data['Материал корпуса'],
         #degree_of_protect__in=[data['Степень защиты корпуса'], 'IP67'],
         #connection_type__startswith=data['Вид подключения'],

@@ -46,21 +46,25 @@ def analogs(request):
         'list' : list,
         'analogs' : analogs,
     }
-    return render(request, template, context)    
+    return render(request, template, context)
+
+def not_found(request):
+    template = 'parsing/not_found.html'
+    return render(request, template)
 
 def analog_detail(request, marking):
     #list = get_object_or_404(Analog, marking=marking)
+    data = ''
     jsonDec = json.decoder.JSONDecoder()
     mark_list = []
     mark_list.append(marking)
-    if Analog.objects.filter(marking=marking).exists():
-        analog = Analog.objects.get(marking=marking)
-    else:
+    if not Analog.objects.filter(marking=marking).exists():
         data = parse_sensor.parse_products(mark_list)
         print(data)
-        analog = Analog.objects.get(marking=marking)
-
+    if data == 'marking_not_found':
+        return HttpResponseRedirect('/not_found/')
     template = 'parsing/analogs_detail.html'
+    analog = Analog.objects.get(marking=marking)
     if analog.difference:
         difference = jsonDec.decode(analog.difference)
     else:
