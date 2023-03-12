@@ -1,4 +1,3 @@
-
 {% extends 'base.html' %}
 {% block title %}Поиск аналога по маркировке{% endblock %}
 {% block header %}Поиск аналога по маркировке{% endblock %}
@@ -24,6 +23,7 @@
     <p><label for="{{ form.marking.id_for_label }}">{{form.marking.label}}&nbsp&nbsp </label>{{ form.marking }}</p>
     <div class="form-error">{{ form.marking.errors }}</div>
     <input type="submit" value="Найти">
+    <p><label for="marking">Пример: ВБИ-М08-45У-1112-З</label></p>
 </form>
 
 <style>
@@ -33,11 +33,11 @@
 </style>
 
 <ul>
-    Аналоги производителей:
+    Доступны аналоги производителей:
 </ul>
 <ul>
-    Сенсор
+    <a href="https://sensor-com.ru/catalog/datchiki-pozitsionirovaniya-i-nalichiya-obyektov/induktivnyie/obschepromyishlennyie-2/">Сенсор</a> (индуктивные датчики)
 </ul>
 
-       
+
 {% endblock %}
