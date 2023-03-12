@@ -12,7 +12,7 @@ def search(marking):
     url = f'https://sensor-com.ru/search/?query=ВБИ-М08-45Р-1112-З'
     return HttpResponseRedirect(f'analogs/{marking}/')
 
-
+# Начальная страница
 def index(request):
     template = 'parsing/index.html'
     #form = forms.AddForm()
@@ -21,6 +21,7 @@ def index(request):
         if form.is_valid():
             marking = form.cleaned_data['marking']
             print(form.cleaned_data)
+            # Проверка есть ли запрашиваемая маркировка в базе
             marking_exists = marking is not None and Analog.objects.filter(marking=marking).exists()
             if marking_exists == True:
                 return HttpResponseRedirect(f'analogs/{marking}/')
@@ -38,7 +39,7 @@ def index(request):
 
     return render(request, template, {'form': form})
     
-
+# Страница со списком существующих замен
 def analogs(request):
     template = 'parsing/analogs_list.html'
     analogs = Analog.objects.all
@@ -48,17 +49,21 @@ def analogs(request):
     }
     return render(request, template, context)
 
+# Страница для не найденной маркировки
 def not_found(request):
     template = 'parsing/not_found.html'
     return render(request, template)
 
+# Страница списка аналогов для запрашиваемой маркировки с отличиями
 def analog_detail(request, marking):
     #list = get_object_or_404(Analog, marking=marking)
     data = ''
     jsonDec = json.decoder.JSONDecoder()
     mark_list = []
     mark_list.append(marking)
+    # Проверка есть ли запрашиваемая маркировка в базе
     if not Analog.objects.filter(marking=marking).exists():
+        # Вызывается функция для парсинга данных из подключаемого файла
         data = parse_sensor.parse_products(mark_list)
         print(data)
     if data == 'marking_not_found':
@@ -69,32 +74,12 @@ def analog_detail(request, marking):
         difference = jsonDec.decode(analog.difference)
     else:
         difference = None
-    if analog.difference1:
-        difference1 = jsonDec.decode(analog.difference1)
-    else:
-        difference1 = None
-    if analog.difference2:
-        difference2 = jsonDec.decode(analog.difference2)
-    else:
-        difference2 = None
-    if analog.difference3:
-        difference3 = jsonDec.decode(analog.difference3)
-    else:
-        difference3 = None
-    if analog.difference4:
-        difference4 = jsonDec.decode(analog.difference4)
-    else:
-        difference4 = None
     
     context = {
         #'list' : list,
         'analog' : analog,
         'marking' : marking,
         'difference' : difference,
-        'difference1' : difference1,
-        'difference2' : difference2,
-        'difference3' : difference3,
-        'difference4' : difference4,
     }
     return render(request, template, context)
 

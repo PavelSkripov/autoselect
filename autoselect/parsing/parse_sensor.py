@@ -1,3 +1,5 @@
+# Исполняемый файл для аналогов Сенсора
+
 import json
 import math
 import requests
@@ -7,10 +9,12 @@ from .models import Analog, Sensor
 
 
 PAGES_COUNT = ['ВБИ-П18В-36УР-1122-С']
+# Площади прямоугольных корпусов
 RECT_SQUARE = [3600, 303, 3936, 6400, 3360, 1250, 3600, 1600, 28900, 480,
 16, 4050, 3300, 560, 4160, 924, 2072, 450, 1100, 5376, 144, 1692, 2485, 2800,
 2730, 6075, 600, 856, 5700]
 
+# Готовая функция проверки ответа с сервера
 def get_soup(url, **kwargs):
     response = requests.get(url, **kwargs)
     if response.status_code == 200:
@@ -39,9 +43,11 @@ def get_soup(url, **kwargs):
 
 #    return urls
 
+# Функция для нахождения ближайшего числа по размерам (для прямоугольных)
 def nearest(lst, target):
     return min(lst, key=lambda x: abs(x-target))
 
+# Функция для формирования url из полученной маркировки
 def urls_list(markings):
     urls = []
     print(f'markings = {markings}')
@@ -66,7 +72,7 @@ def urls_list(markings):
         urls = []
     return urls
 
-
+# Функция для парсинга параметров с сайта по CSS селектору
 def parse_products(markings):
     techs = {}
     data = 'marking_not_found'
@@ -93,7 +99,8 @@ def parse_products(markings):
         return data
     else:
         return induct(techs)
-    
+
+# Функция для приведения полученного словаря с данными к типовому виду    
 def induct(data):
     x = ''
     if data['Тип корпуса'] == 'Цилиндрический с резьбой':
@@ -190,7 +197,7 @@ def induct(data):
     return create_analog(data)
     
 
-
+# Функция для извлечения из базы подходящих объектов близких по параметрам
 def create_analog(data):
     x = ''
     y = ''
@@ -263,6 +270,7 @@ def create_analog(data):
         class_temp__in=[data['Класс температуры'], 'Стандартный']
         )[:5]
 
+        # Формирование списка отличий
         for sensor_object in sensor_objects:
             analog.mark = sensor_object.marking
             analog.marking_analog.add(sensor_object)
